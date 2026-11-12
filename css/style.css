@@ -1,0 +1,67 @@
+/* ✏️ Cores do site: mude aqui */
+:root{--nav:#141c20;--bar:#68a0ae;--accent:#d98e55;--accent2:#e8a56d;--ink:#f2f2f2;--muted:#a9bcc4;--card:#34525e;--navy1:#0a1822;--navy2:#0f3040}
+*{box-sizing:border-box}
+body{margin:0;background:#0a1318;color:var(--ink);font-family:"Montserrat",system-ui,sans-serif}
+a{color:inherit;text-decoration:none}
+nav.top{background:var(--nav);display:flex;gap:28px;align-items:center;padding:0 32px;height:76px;flex-wrap:wrap}
+nav.top .logo{font-weight:800;letter-spacing:.06em;font-size:18px;margin-right:12px}
+nav.top a.l{font-size:14px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:8px 0;border-bottom:2px solid transparent}
+nav.top a.l.on{border-color:var(--accent)}
+nav.top .sp{flex:1}
+.count{background:var(--bar);color:#0b1a20;text-align:center;padding:16px;text-transform:uppercase;font-size:17px}
+.hero{min-height:620px;display:flex;align-items:center;justify-content:flex-end;padding:40px 8vw;background:linear-gradient(120deg,#0b1a22 0%,#123241 55%,#0a141a 100%) center/cover}
+.hero .in{width:min(520px,100%)}
+.hero h1{font-size:clamp(44px,7vw,88px);line-height:.92;margin:0 0 28px;font-weight:800;text-transform:uppercase}
+.hero .date{font-family:Georgia,serif;font-size:clamp(34px,5vw,64px);font-weight:700;text-transform:uppercase;margin:0}
+.hero .place{font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 28px}
+.btn{display:inline-block;background:var(--accent);color:#1a1209;border:0;border-radius:3px;padding:16px 30px;font:700 15px "Montserrat",sans-serif;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:var(--accent2)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--accent)}
+.btn.red{background:#8a2f2f;color:#fff}
+.btn:focus-visible,.nom:focus-visible,a:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+section.explore{padding:56px 6vw;background:#070d11}
+section.explore h2{font-size:52px;font-weight:800;margin:0 0 28px;text-transform:uppercase}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px}
+.tile{background:var(--card);border-radius:4px;padding:34px 24px;min-height:140px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tile:hover{outline:2px solid var(--accent)}
+/* Tela de votação: azul ESCURO */
+.vote{min-height:calc(100vh - 76px);padding-bottom:140px;background:linear-gradient(135deg,var(--navy1) 0%,var(--navy2) 60%,#0b2230 100%)}
+.sub{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 5vw;border-bottom:1px solid #ffffff22;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.sub div{display:flex;gap:28px}.sub .hl{color:#5fd0e6}
+.vote h1{font-size:clamp(34px,5vw,60px);font-weight:800;text-transform:uppercase;margin:48px 5vw 10px}
+.vote p.d{font-size:20px;color:#d6e4ea;margin:0 5vw 44px;max-width:760px}
+.grid{display:flex;flex-wrap:wrap;gap:24px;padding:0 5vw}
+.nom{width:208px;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font-family:inherit}
+.nom .ph{width:208px;height:243px;object-fit:cover;background:#16303c;display:block}
+.nom .v{background:#68a0ae55;text-align:center;padding:16px 0;font-weight:700;letter-spacing:.14em;font-size:14px}
+.nom:hover .v{background:#68a0ae88}
+.nom.sel .v{background:var(--accent);color:#1a1209}
+.nom.sel .ph{outline:3px solid var(--accent)}
+.nom b{display:block;margin-top:14px;font-size:17px;text-transform:uppercase;letter-spacing:.04em}
+.nom small{color:#c0d2da;font-size:14px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#050d12ee;border-top:1px solid var(--accent);padding:14px 5vw;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.gate{min-height:60vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(135deg,var(--navy1),var(--navy2))}
+.box{max-width:520px;text-align:center;border:1px solid #ffffff33;padding:36px;background:#0006}
+.box h2{margin-top:0}
+.list{max-width:760px;margin:0 5vw}
+.list .it{display:flex;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:1px solid #ffffff22}
+.miss{color:#ff9b8a}
+.foot{text-align:center;padding:20px;color:var(--muted);font-size:12px}
+/* admin */
+.adm{max-width:980px;margin:0 auto;padding:24px 20px 100px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{background:#16242b;color:var(--ink);border:1px solid #2c444f;padding:12px 20px;cursor:pointer;font:600 14px "Montserrat",sans-serif}
+.tab.on{background:var(--accent);color:#1a1209;border-color:var(--accent)}
+.card{background:#101d24;border:1px solid #243a45;padding:20px;margin:16px 0;border-radius:4px}
+.card h3{margin-top:0}
+label{display:block;font-size:13px;color:var(--muted);margin-top:12px}
+input[type=text],input[type=date],textarea{width:100%;background:#050d12;border:1px solid #2c444f;color:var(--ink);padding:10px;font:inherit;margin-top:4px;border-radius:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mini{display:flex;gap:12px;align-items:center;border-top:1px solid #243a45;padding:10px 0;flex-wrap:wrap}
+.mini img{width:48px;height:56px;object-fit:cover;background:#16303c}
+.mini input[type=text]{flex:1;min-width:140px;margin:0}
+.res{margin:10px 0}.res .t{display:flex;justify-content:space-between}
+.res .b{height:10px;background:#16303c;margin-top:4px}.res .b i{display:block;height:100%;background:var(--accent)}
+#toast{position:fixed;top:16px;right:16px;background:var(--accent);color:#1a1209;padding:10px 18px;font-weight:700;opacity:0;transition:opacity .3s}
+#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
