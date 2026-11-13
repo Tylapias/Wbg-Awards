@@ -51,6 +51,8 @@ const pCats = () => `<div class="card"><h3>Nova categoria</h3><input type="text"
   ${cats.map((c, i) => `<div class="card">
     <label>Título da categoria<input type="text" data-f="title" data-i="${i}" value="${esc(c.title)}"></label>
     <label>Descrição (aparece embaixo do título)<textarea data-f="desc" data-i="${i}" rows="2">${esc(c.desc || "")}</textarea></label>
+    <label>Quantas escolhas cada pessoa pode fazer (1 = só uma)
+      <input type="number" min="1" data-f="max" data-i="${i}" value="${c.max || 1}" style="width:100px;display:block;background:#050d12;border:1px solid #2c444f;color:#f2f2f2;padding:10px;margin-top:4px;border-radius:3px;font:inherit"></label>
     <label><input type="checkbox" data-f="required" data-i="${i}" ${c.required !== false ? "checked" : ""}> Resposta obrigatória</label>
     <h4>Indicados</h4>
     ${(c.nominees || []).map((n, j) => `<div class="mini">${n.img ? `<img src="${n.img}">` : `<img alt="">`}
@@ -65,10 +67,15 @@ const pCats = () => `<div class="card"><h3>Nova categoria</h3><input type="text"
 
 function pRes() {
   const out = cats.map(c => {
-    const cnt = {}; votes.forEach(v => { const k = v.choices?.[c.id]; if (k) cnt[k] = (cnt[k] || 0) + 1; });
-    const sum = Object.values(cnt).reduce((a, b) => a + b, 0);
-    return `<div class="card"><h3>${esc(c.title)}</h3>${[...(c.nominees || [])].sort((a, b) => (cnt[b.id] || 0) - (cnt[a.id] || 0)).map(n => {
-      const k = cnt[n.id] || 0, p = sum ? Math.round(k * 100 / sum) : 0;
+    const cnt = {}; let people = 0;
+    votes.forEach(v => {
+      const s = [].concat(v.choices?.[c.id] ?? []);   // aceita voto antigo (texto) e novo (lista)
+      if (s.length) people++;
+      s.forEach(k => (cnt[k] = (cnt[k] || 0) + 1));
+    });
+    return `<div class="card"><h3>${esc(c.title)}</h3><p style="color:var(--muted);margin-top:-8px">${people} pessoa(s) votaram nesta categoria${c.max > 1 ? ` · até ${c.max} escolhas por pessoa` : ""}</p>
+    ${[...(c.nominees || [])].sort((a, b) => (cnt[b.id] || 0) - (cnt[a.id] || 0)).map(n => {
+      const k = cnt[n.id] || 0, p = people ? Math.round(k * 100 / people) : 0;
       return `<div class="res"><div class="t"><span>${esc(n.name)}</span><b>${k} voto(s) · ${p}%</b></div><div class="b"><i style="width:${p}%"></i></div></div>`;
     }).join("")}</div>`;
   }).join("");
@@ -84,7 +91,7 @@ const pAdm = () => `<div class="card"><h3>Administradores</h3>
   <p><button class="btn" data-a="addadmin">Adicionar admin</button></p>` : `<p>Só o dono pode alterar administradores.</p>`}</div>`;
 
 const cref = c => fs.doc(db, "categories", c.id);
-const saveCat = c => fs.updateDoc(cref(c), { title: c.title, desc: c.desc || "", required: c.required !== false, nominees: c.nominees || [] });
+const saveCat = c => fs.updateDoc(cref(c), { title: c.title, desc: c.desc || "", required: c.required !== false, max: Math.max(1, parseInt(c.max) || 1), nominees: c.nominees || [] });
 
 document.addEventListener("change", async e => {
   const t = e.target, f = t.dataset.f; if (!f) return;
@@ -92,8 +99,8 @@ document.addEventListener("change", async e => {
   if (t.dataset.n !== undefined) {
     const n = c.nominees[+t.dataset.n];
     if (f === "img") n.img = await resize(t.files[0]); else n[f] = t.value;
-  } else c[f] = f === "required" ? t.checked : t.value;
-  await saveCat(c); toast("Salvo"); if (f === "img") draw();
+  } else c[f] = f === "required" ? t.checked : f === "max" ? Math.max(1, parseInt(t.value) || 1) : t.value;
+  await saveCat(c); toast("Salvo"); if (f === "img" || f === "max") draw();
 });
 
 document.addEventListener("click", async e => {
@@ -108,7 +115,7 @@ document.addEventListener("click", async e => {
       await fs.setDoc(fs.doc(db, "settings", "main"), { ...S, name: $("#e-name").value, place: $("#e-place").value, eventDate: $("#e-date").value, heroImg: file ? await resize(file, 1600, 0.75) : S.heroImg || "" });
     }
     if (a === "toggle") await fs.setDoc(fs.doc(db, "settings", "main"), { ...S, votingOpen: !S.votingOpen });
-    if (a === "addcat") { const t = $("#newcat").value.trim(); if (!t) return; await fs.addDoc(fs.collection(db, "categories"), { title: t, desc: "", required: true, order: Date.now(), nominees: [] }); }
+    if (a === "addcat") { const t = $("#newcat").value.trim(); if (!t) return; await fs.addDoc(fs.collection(db, "categories"), { title: t, desc: "", required: true, max: 1, order: Date.now(), nominees: [] }); }
     if (a === "delcat") { if (!confirm("Apagar esta categoria?")) return; await fs.deleteDoc(cref(c)); }
     if (a === "up" || a === "down") {
       const o = cats[+i + (a === "up" ? -1 : 1)]; if (!o) return;

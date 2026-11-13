@@ -6,6 +6,8 @@ let cats = [], user = null, voted = false;
 let choices = JSON.parse(localStorage.getItem("wba-choices") || "{}");
 const app = $("#app");
 const persist = () => localStorage.setItem("wba-choices", JSON.stringify(choices));
+const max = c => Math.max(1, parseInt(c.max) || 1);          // quantas escolhas a categoria permite
+const sel = c => [].concat(choices[c.id] ?? []);             // escolhas atuais (aceita texto ou lista)
 
 async function boot() {
   const s = await fs.getDoc(fs.doc(db, "settings", "main"));
@@ -64,30 +66,31 @@ function gate() {
 function voteView(i) {
   const g = gate(); if (g) return (app.innerHTML = g);
   i = Math.min(Math.max(i, 0), cats.length - 1);
-  const c = cats[i], last = i === cats.length - 1;
+  const c = cats[i], last = i === cats.length - 1, picked = sel(c);
   app.innerHTML = `<section class="vote">
     <div class="sub"><a href="#/">← Sair da votação</a><div>
       ${i > 0 ? `<a href="#/votar/${i - 1}">← Anterior</a>` : ""}
       <a class="hl" href="#/categorias">Ver todas as categorias</a>
       <a href="${last ? "#/categorias" : "#/votar/" + (i + 1)}">${last ? "Revisar e enviar" : "Próxima"} →</a></div></div>
     <h1>${esc(c.title)}</h1><p class="d">${esc(c.desc || "")}</p>
+    ${max(c) > 1 ? `<p class="d" style="margin-top:-30px"><b>Escolha até ${max(c)} · ${picked.length} de ${max(c)} escolhidos</b></p>` : ""}
     <div class="grid">${c.nominees.map(n => `
-      <button class="nom ${choices[c.id] === n.id ? "sel" : ""}" data-cat="${c.id}" data-nom="${n.id}" data-i="${i}">
+      <button class="nom ${picked.includes(n.id) ? "sel" : ""}" data-cat="${c.id}" data-nom="${n.id}" data-i="${i}">
         ${n.img ? `<img class="ph" src="${n.img}" alt="${esc(n.name)}">` : `<div class="ph"></div>`}
-        <div class="v">${choices[c.id] === n.id ? "✔ SEU VOTO" : "VOTAR"}</div>
+        <div class="v">${picked.includes(n.id) ? "✔ SEU VOTO" : "VOTAR"}</div>
         <b>${esc(n.name)}</b><small>${esc(n.sub || "")}</small></button>`).join("")}</div>
   </section>`;
 }
 
 function listView() {
   const g = gate(); if (g) return (app.innerHTML = g);
-  const done = cats.filter(c => choices[c.id]).length;
-  const missing = cats.filter(c => c.required !== false && !choices[c.id]).length;
+  const done = cats.filter(c => sel(c).length).length;
+  const missing = cats.filter(c => c.required !== false && !sel(c).length).length;
   app.innerHTML = `<section class="vote"><h1>Suas escolhas</h1><p class="d">Revise antes de enviar. Depois de enviar, não dá para alterar.</p>
     <div class="list">${cats.map((c, i) => {
-      const n = c.nominees.find(x => x.id === choices[c.id]);
-      return `<div class="it"><div><b>${esc(c.title)}</b><br>${n ? esc(n.name) : `<span class="miss">${c.required !== false ? "Falta escolher" : "Sem voto (opcional)"}</span>`}</div>
-        <a class="btn ghost" href="#/votar/${i}">${n ? "Alterar" : "Escolher"}</a></div>`;
+      const names = c.nominees.filter(x => sel(c).includes(x.id)).map(x => x.name);
+      return `<div class="it"><div><b>${esc(c.title)}</b><br>${names.length ? esc(names.join(", ")) : `<span class="miss">${c.required !== false ? "Falta escolher" : "Sem voto (opcional)"}</span>`}</div>
+        <a class="btn ghost" href="#/votar/${i}">${names.length ? "Alterar" : "Escolher"}</a></div>`;
     }).join("")}</div>
     <div class="bar"><span>${done} de ${cats.length} categorias</span>
     <button class="btn" data-a="send" ${missing ? "disabled" : ""}>Enviar meus votos</button></div></section>`;
@@ -95,14 +98,30 @@ function listView() {
 
 document.addEventListener("click", async e => {
   const a = e.target.closest("[data-a]")?.dataset.a;
-  if (a === "login") { e.preventDefault(); login(); }
+  if (a === "login") { e.preventDefault(); login().catch(err => alert("Erro no login: " + err.code)); }
   if (a === "out") { e.preventDefault(); logout(); }
   const n = e.target.closest(".nom");
-  if (n) { choices[n.dataset.cat] = n.dataset.nom; persist(); const y = scrollY; voteView(+n.dataset.i); scrollTo(0, y); }
+  if (n) {
+    const c = cats.find(x => x.id === n.dataset.cat);
+    if (max(c) === 1) choices[c.id] = n.dataset.nom;
+    else {
+      let s = sel(c);
+      if (s.includes(n.dataset.nom)) s = s.filter(x => x !== n.dataset.nom);
+      else if (s.length >= max(c)) return alert(`Você pode escolher no máximo ${max(c)} nesta categoria. Desmarque um para trocar.`);
+      else s.push(n.dataset.nom);
+      if (s.length) choices[c.id] = s; else delete choices[c.id];
+    }
+    persist(); const y = scrollY; voteView(+n.dataset.i); scrollTo(0, y);
+  }
   if (a === "send") {
     if (!confirm("Confirmar? Depois de enviar, não dá para mudar.")) return;
+    const out = {};
+    cats.forEach(c => {
+      const s = sel(c).filter(id => c.nominees.some(x => x.id === id)).slice(0, max(c));
+      if (s.length) out[c.id] = max(c) === 1 ? s[0] : s;
+    });
     try {
-      await fs.setDoc(fs.doc(db, "votes", user.email), { email: user.email, choices, createdAt: fs.serverTimestamp() });
+      await fs.setDoc(fs.doc(db, "votes", user.email), { email: user.email, choices: out, createdAt: fs.serverTimestamp() });
       voted = true; localStorage.removeItem("wba-choices"); location.hash = "#/votar/0"; route();
     } catch { app.innerHTML = box("Não foi possível votar", "Você já votou ou a votação foi fechada."); }
   }
